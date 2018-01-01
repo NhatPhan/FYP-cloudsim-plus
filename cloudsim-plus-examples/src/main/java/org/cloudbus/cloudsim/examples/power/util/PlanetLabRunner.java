@@ -81,31 +81,33 @@ public final class PlanetLabRunner extends RunnerAbstract {
      * @param inputFolderName the input folder name
      * @return the list
      */
-    public static List<Cloudlet> createCloudletListPlanetLab(DatacenterBroker broker, String inputFolderName) {
-final long fileSize = 300;
+    public static List<Cloudlet> createCloudletListPlanetLab(DatacenterBroker broker, String inputFolderName)
+    {
+        final long fileSize = 300;
         final long outputSize = 300;
 
-final File inputFolder = new File(inputFolderName);
-final File[] files = inputFolder.listFiles();
-if(Objects.isNull(files)) {
-return new ArrayList<>();
-}
+        final File inputFolder = new File(inputFolderName);
+        final File[] files = inputFolder.listFiles();
 
-final int filesToRead = Math.min(files.length, MAX_NUMBER_OF_WORLOAD_FILES_TO_READ);
-final List<Cloudlet> list = new ArrayList<>(filesToRead);
+        if(Objects.isNull(files)) {
+            return new ArrayList<>();
+        }
+
+        final int filesToRead = Math.min(files.length, MAX_NUMBER_OF_WORLOAD_FILES_TO_READ);
+        final List<Cloudlet> list = new ArrayList<>(filesToRead);
+
         for (int i = 0; i < filesToRead; i++) {
             try {
-UtilizationModel utilizationModelCPU =
-new UtilizationModelPlanetLab(
-                                files[i].getAbsolutePath(),
-                                Constants.SCHEDULING_INTERVAL);
-                CloudletSimple cloudlet = new CloudletSimple(
-i, Constants.CLOUDLET_LENGTH, Constants.CLOUDLET_PES);
-                cloudlet.setFileSize(fileSize)
-.setOutputSize(outputSize)
-                        .setUtilizationModelCpu(utilizationModelCPU);
-//cloudlet.setVm(i);
-list.add(cloudlet);
+                UtilizationModel utilizationModelCPU =
+                    new UtilizationModelPlanetLab(files[i].getAbsolutePath(), Constants.SCHEDULING_INTERVAL);
+
+                CloudletSimple cloudlet = new CloudletSimple(i, Constants.CLOUDLET_LENGTH, Constants.CLOUDLET_PES);
+
+                cloudlet.setFileSize(fileSize).setOutputSize(outputSize).setUtilizationModelCpu(utilizationModelCPU);
+
+                //cloudlet.setVm(i);
+
+                list.add(cloudlet);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(0);
