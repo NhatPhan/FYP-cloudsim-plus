@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 public class test {
     public static void writeToPtrace(double temperature) {
         try {
-            String ptrace_content = "Core\r\n0.0\r\n" + temperature;
+            String ptrace_content = "Core\r\n" + temperature;
             String write_command = "echo '" + ptrace_content + "' > xeon3040.ptrace";
 
             System.out.println(write_command);

@@ -25,6 +25,8 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
 
     private double underUtilizationThreshold;
     private double thresholdTemperature;
+    private double weightUtilization;
+    private double weightTemperature;
 
     private PowerVmSelectionPolicy vmSelectionPolicy;
 
@@ -37,6 +39,8 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
     {
         super();
         this.underUtilizationThreshold = 0.35;
+        this.weightUtilization = 0.;
+        this.weightTemperature = 1 - this.weightUtilization;
         this.savedAllocation = new HashMap<>();
         this.utilizationHistory = new HashMap<>();
         this.metricHistory = new HashMap<>();
@@ -252,11 +256,28 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
         return getHostCpuTemperature(host) > upperThreshold;
     }
 
+    /**
+     * Cost Function (CF) Algorithm to select host:
+     *
+     * For host i: Cost = wT * Ti' + wU * Ui'
+     * Where wT is weight of Thermal, wU is weight of Utilization
+     * Ti' and Ui' is normalized value of Ti and Ui
+     * Ti' = Ti / T_threshold ; Ui' = Ui / U_threshold
+     *
+     * We will select the host with mimimum Cost value
+    **/
     protected Optional<PowerHost> findHostForVmInternal(final Vm vm, final Stream<PowerHost> hostStream){
-        final Comparator<PowerHost> hostPowerConsumptionComparator =
-            Comparator.comparingDouble(h -> getPowerAfterAllocationDifference(h, vm));
+        // Min Power After Allocation Comparator (Old)
+        // final Comparator<PowerHost> comparator =
+        //    Comparator.comparingDouble(h -> getPowerAfterAllocationDifference(h, vm));
 
-        return additionalHostFilters(vm, hostStream).min(hostPowerConsumptionComparator);
+        // Cost Function Comparator
+        final Comparator<PowerHost> comparator = Comparator.comparingDouble(h ->
+                weightUtilization * (getMaxUtilizationAfterAllocation(h, vm) / getOverUtilizationThreshold(h)) +
+                weightTemperature * (getHostCpuTemperature(getPowerAfterAllocation(h, vm)) / getThresholdTemperature(h))
+        );
+
+        return additionalHostFilters(vm, hostStream).min(comparator);
     }
 
     protected Stream<PowerHost> additionalHostFilters(final Vm vm, final Stream<PowerHost> hostStream){
@@ -326,11 +347,12 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
     }
 
     private double getHostCpuTemperature(PowerHost host) {
-        //TODO: Add API to get data from Hotspot
-        //Random rand = new Random();
-        //return rand.nextDouble() * 500 + 10.1;
-        //System.out.println("result from hotspot: " + HotspotApi.getTemperature(host.getPower()));
-        return HotspotApi.getTemperature(host.getPower());
+        double temperature = HotspotApi.getTemperature(host.getPower());
+        return temperature;
+    }
+
+    private double getHostCpuTemperature(double power) {
+        return HotspotApi.getTemperature(power);
     }
 
     private void updateMigrationMapFromUnderloadedHosts(Set<PowerHostUtilizationHistory> overloadedHosts, final Map<Vm, Host> migrationMap) {

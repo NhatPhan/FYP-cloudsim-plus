@@ -26,7 +26,7 @@ public class ThrMu {
         String vmSelectionPolicy = "mu"; // Minimum Utilization (MU) VM selection policy
         double staticUtilizationThreshold = 0.9;
 
-        double[] temperatureThresholds = { 354, 356, 358, 360 };
+        double[] temperatureThresholds = { 333.0, 335.0, 338.0, 340.0, 343.0, 345.0, 348.0, 350.0, 352.0, 353.0, 354.0, 356.0, 358.0, 360.0 };
         for(double staticTemperatureThreshold : temperatureThresholds ) {
             new ThermalPlanetLabRunner(
                 true,
