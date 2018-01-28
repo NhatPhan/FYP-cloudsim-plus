@@ -67,12 +67,12 @@ public final class Constants {
     /**
      * The number of PEs of each host defined by {@link #HOST_TYPES}.
      */
-    public final static int[] HOST_PES = {2, 2};
+    public final static int[] HOST_PES = {1, 1};
 
     /**
      * The RAM capacity of each host defined by {@link #HOST_TYPES}.
      */
-    public final static int[] HOST_RAM = {4096, 4096};
+    public final static int[] HOST_RAM = {2048, 4096};
 
     public final static long HOST_BW = 1000000; // 1 Gbit/s
     public final static int HOST_STORAGE = 1000000; // 1 GB

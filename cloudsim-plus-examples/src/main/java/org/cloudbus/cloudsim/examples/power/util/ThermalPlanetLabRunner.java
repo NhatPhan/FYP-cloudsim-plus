@@ -26,60 +26,39 @@ import java.util.Objects;
  * @author Anton Beloglazov
  * @since Jan 5, 2012
  */
-public final class PlanetLabRunner extends RunnerAbstract {
-    private final static int NUMBER_OF_HOSTS = 350;
-    /**
-     * The input folder given to the constructor constains lots of
-     * planet lab workload files. One cloudlet is created
-     * for each file into this directory.
-     * Each file is used as input to the cloudlet's CPU UtilizationModel.
-     * This constant limits the number of files to read,
-     * limiting the number of cloudlets to create.
-     * The value {@link Integer#MAX_VALUE} indicates no limit.
-     */
+public final class ThermalPlanetLabRunner extends ThermalRunnerAbstract {
+
+    private final static int NUMBER_OF_HOSTS = 50;
     private final static int MAX_NUMBER_OF_WORLOAD_FILES_TO_READ = Integer.MAX_VALUE;
 
     /**
-	 * Instantiates a new planet lab runner.
-	 *
-	 * @param enableOutput the enable output
-	 * @param outputToFile the output to file
-	 * @param inputFolder the input folder
-	 * @param outputFolder the output folder
-	 * @param workload the workload
-	 * @param vmAllocationPolicy the vm allocation policy
-	 * @param vmSelectionPolicy the vm selection policy
-     * @param safetyParameterOrUtilizationThreshold a double value to be passed to the specific
-     *                               PowerVmSelectionPolicy being created, which the meaning depends
-     *                               on that policy.
-	 */
-	public PlanetLabRunner(
-			boolean enableOutput,
-			boolean outputToFile,
-			String inputFolder,
-			String outputFolder,
-			String workload,
-			String vmAllocationPolicy,
-			String vmSelectionPolicy,
-			double safetyParameterOrUtilizationThreshold)
+     * Instantiates a new thermal planet lab runner.
+     */
+    public ThermalPlanetLabRunner(
+        boolean enableOutput,
+        boolean outputToFile,
+        String inputFolder,
+        String outputFolder,
+        String workload,
+        String vmAllocationPolicy,
+        String vmSelectionPolicy,
+        double utilizationThreshold,
+        double temperatureThreshold)
     {
-		super(
-				enableOutput,
-				outputToFile,
-				inputFolder,
-				outputFolder,
-				workload,
-				vmAllocationPolicy,
-				vmSelectionPolicy,
-                safetyParameterOrUtilizationThreshold);
-	}
+        super(
+            enableOutput,
+            outputToFile,
+            inputFolder,
+            outputFolder,
+            workload,
+            vmAllocationPolicy,
+            vmSelectionPolicy,
+            utilizationThreshold,
+            temperatureThreshold);
+    }
 
     /**
      * Creates the cloudlet list planet lab.
-     *
-     * @param broker the broker
-     * @param inputFolderName the input folder name
-     * @return the list
      */
     public static List<Cloudlet> createCloudletListPlanetLab(DatacenterBroker broker, String inputFolderName)
     {
@@ -118,18 +97,18 @@ public final class PlanetLabRunner extends RunnerAbstract {
     }
 
     @Override
-	protected void init(final String inputFolder) {
-		try {
-		    super.init(inputFolder);
-			broker = Helper.createBroker(getSimulation());
-			cloudletList = createCloudletListPlanetLab(broker, inputFolder);
-			vmList = Helper.createVmList(broker, cloudletList.size());
-			hostList = Helper.createHostList(NUMBER_OF_HOSTS);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Log.printLine("The simulation has been terminated due to an unexpected error");
-			System.exit(0);
-		}
-	}
+    protected void init(final String inputFolder) {
+        try {
+            super.init(inputFolder);
+            broker = Helper.createBroker(getSimulation());
+            cloudletList = createCloudletListPlanetLab(broker, inputFolder);
+            vmList = Helper.createVmList(broker, cloudletList.size());
+            hostList = Helper.createHostList(NUMBER_OF_HOSTS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.printLine("The simulation has been terminated due to an unexpected error");
+            System.exit(0);
+        }
+    }
 
 }
