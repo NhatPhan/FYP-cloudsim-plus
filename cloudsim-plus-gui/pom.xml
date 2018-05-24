@@ -94,5 +94,10 @@
             <artifactId>unix4j-command</artifactId>
             <version>0.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.cloudsimplus</groupId>
+            <artifactId>cloudsim-plus-examples</artifactId>
+            <version>1.2.4</version>
+        </dependency>
     </dependencies>
 </project>

@@ -58,6 +58,7 @@
         <module>cloudsim-plus-examples</module>
 		<module>cloudsim-plus-benchmarks</module>
 		<module>cloudsim-plus-testbeds</module>
+        <module>cloudsim-plus-gui</module>
     </modules>
 
     <build>
