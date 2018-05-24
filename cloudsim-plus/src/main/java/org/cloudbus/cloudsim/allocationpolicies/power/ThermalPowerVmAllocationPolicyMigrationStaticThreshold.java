@@ -5,8 +5,10 @@ import org.cloudbus.cloudsim.selectionpolicies.power.PowerVmSelectionPolicy;
 
 public class ThermalPowerVmAllocationPolicyMigrationStaticThreshold extends ThermalPowerVmAllocationPolicyMigrationAbstract
 {
-    private double overUtilizationThreshold = 0.9;
-    private double overTemperatureThreshold = 300.1;
+    private double overUtilizationThreshold;
+    private double overTemperatureThreshold;
+    private double underUtilizationThreshold;
+    private double weightUtilization;
 
     public ThermalPowerVmAllocationPolicyMigrationStaticThreshold(
         PowerVmSelectionPolicy vmSelectionPolicy,
@@ -16,6 +18,21 @@ public class ThermalPowerVmAllocationPolicyMigrationStaticThreshold extends Ther
         super(vmSelectionPolicy);
         setOverUtilizationThreshold(overUtilizationThreshold);
         setThresholdTemperature(thresholdTemperature);
+    }
+
+    public ThermalPowerVmAllocationPolicyMigrationStaticThreshold(
+        PowerVmSelectionPolicy vmSelectionPolicy,
+        double overUtilizationThreshold,
+        double thresholdTemperature,
+        double underUtilizationThreshold,
+        double weightUtilization
+    ) {
+        super(vmSelectionPolicy);
+        setOverUtilizationThreshold(overUtilizationThreshold);
+        setThresholdTemperature(thresholdTemperature);
+        setUnderUtilizationThreshold(underUtilizationThreshold);
+        setWeightUtilization(weightUtilization);
+        setWeightTemperature(1-weightUtilization);
     }
 
     @Override

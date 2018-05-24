@@ -1,0 +1,24 @@
+#parse("/velocity/layout.vm")
+#@mainLayout()
+    <div>
+        <div class="result-detail-list">
+            <div class="result-detail-list-part">
+                <h1 class="result-list-detail-header">Summary: </h1>
+                <div class="detail-orange">
+                    #foreach ($line in $summaryLines)
+                        <p>$line</p>
+                    #end
+                </div>
+            </div>
+            <div class="result-detail-list-part">
+                <h1 class="result-list-detail-header">Details: </h1>
+                <div class="detail-orange">
+                    #foreach ($line in $detailLines)
+                        <p>$line</p>
+                    #end
+                </div>
+            </div>
+        </div>
+    </div>
+#end
+

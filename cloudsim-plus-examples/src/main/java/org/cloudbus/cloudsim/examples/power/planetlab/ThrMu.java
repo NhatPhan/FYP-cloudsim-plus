@@ -39,14 +39,14 @@ public class ThrMu {
             inputFolder = "";
         }
 		String outputFolder = "output";
-		String workload = "20110303"; // PlanetLab workload
+		String workload = "20110303_100s"; // PlanetLab workload
 		String vmAllocationPolicy = "thr"; // Static Threshold (THR) VM allocation policy
 		String vmSelectionPolicy = "mu"; // Minimum Utilization (MU) VM selection policy
         double staticUtilizationThreshold = 0.8;
 
 		new PlanetLabRunner(
             true,
-            false,
+            true,
 				inputFolder,
 				outputFolder,
 				workload,

@@ -27,7 +27,7 @@ import java.util.Objects;
  * @since Jan 5, 2012
  */
 public final class PlanetLabRunner extends RunnerAbstract {
-    private final static int NUMBER_OF_HOSTS = 350;
+    private final static int NUMBER_OF_HOSTS = 120;
     /**
      * The input folder given to the constructor constains lots of
      * planet lab workload files. One cloudlet is created

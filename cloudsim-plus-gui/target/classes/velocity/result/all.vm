@@ -1,0 +1,23 @@
+#parse("/velocity/layout.vm")
+#@mainLayout()
+<h1 class="result-list-header">$msg.get("RESULTS_HEADING_ALL")</h1>
+<div>
+    <div class="result-list">
+        <p class="warning">$msg.get("RESULT_INSTRUCTIONS", $WebPath.getRESULTS())</p>
+        <ul>
+            #foreach($result in $results)
+                <li class="orange">
+                    <a class="result" href="$WebPath.getRESULTS()$result.getFullPath()">
+                        <p><b>Total Hosts:</b> $result.getNumHosts() <b>Total VMs:</b> $result.getNumVMs(),
+                            <b>Upper Utilization Threshold:</b> $result.getUtilizationThreshold(),
+                            <b>Lower Utilization Threshold:</b> $result.getUnderUtilizationThreshold(),
+                            <b>Temperature Threshold:</b> $result.getTemperatureThreshold(),
+                            <b>Utilization Weight:</b> $result.getWeightUtilization(),
+                            <b>Power Model:</b> $result.getPowerModel()</p>
+                    </a>
+                </li>
+            #end
+        </ul>
+    </div>
+</div>
+#end

@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 public class HotspotApi {
     public static void writeToPtrace(double power) {
         try {
-            String ptrace_content = "Core\r\n0.0\r\n" + power;
+            String ptrace_content = "Core\r\n" + power;
             String write_command = "echo '" + ptrace_content + "' > xeon3040.ptrace";
 
             String[] cmd = {"/bin/sh", "-c", "cd ../FYP-hotspot; " + write_command};

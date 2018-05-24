@@ -5,8 +5,6 @@ import org.cloudbus.cloudsim.hosts.power.PowerHost;
 /**
  * An interface to be implemented by VM allocation policy for power and thermal aware VMs
  * that detects Power Host over CPU utilization or over threshold temperature.
- *
- * @author Phan Minh Nhat
  */
 public interface ThermalPowerVmAllocationPolicyMigration extends PowerVmAllocationPolicyMigration {
     /**
@@ -24,3 +22,4 @@ public interface ThermalPowerVmAllocationPolicyMigration extends PowerVmAllocati
      */
     void setThresholdTemperature(double thresholdTemperature);
 }
+

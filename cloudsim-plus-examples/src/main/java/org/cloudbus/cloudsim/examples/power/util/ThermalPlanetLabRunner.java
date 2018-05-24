@@ -3,6 +3,7 @@ package org.cloudbus.cloudsim.examples.power.util;
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.CloudletSimple;
+import org.cloudbus.cloudsim.power.models.PowerModel;
 import org.cloudbus.cloudsim.util.Log;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModel;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelPlanetLab;
@@ -27,10 +28,6 @@ import java.util.Objects;
  * @since Jan 5, 2012
  */
 public final class ThermalPlanetLabRunner extends ThermalRunnerAbstract {
-
-    private final static int NUMBER_OF_HOSTS = 50;
-    private final static int MAX_NUMBER_OF_WORLOAD_FILES_TO_READ = Integer.MAX_VALUE;
-
     /**
      * Instantiates a new thermal planet lab runner.
      */
@@ -58,9 +55,45 @@ public final class ThermalPlanetLabRunner extends ThermalRunnerAbstract {
     }
 
     /**
+     * Instantiates a new thermal planet lab runner.
+     */
+    public ThermalPlanetLabRunner(
+        boolean enableOutput,
+        boolean outputToFile,
+        String inputFolder,
+        String outputFolder,
+        String workload,
+        String vmAllocationPolicy,
+        String vmSelectionPolicy,
+        double utilizationThreshold,
+        double temperatureThreshold,
+        double underUtilizationThreshold,
+        double weightUtilization,
+        PowerModel powerModel,
+        int numberOfHosts,
+        int numberOfVMs)
+    {
+        super(
+            enableOutput,
+            outputToFile,
+            inputFolder,
+            outputFolder,
+            workload,
+            vmAllocationPolicy,
+            vmSelectionPolicy,
+            utilizationThreshold,
+            temperatureThreshold,
+            underUtilizationThreshold,
+            weightUtilization,
+            powerModel,
+            numberOfHosts,
+            numberOfVMs);
+    }
+
+    /**
      * Creates the cloudlet list planet lab.
      */
-    public static List<Cloudlet> createCloudletListPlanetLab(DatacenterBroker broker, String inputFolderName)
+    public List<Cloudlet> createCloudletListPlanetLab(DatacenterBroker broker, String inputFolderName)
     {
         final long fileSize = 300;
         final long outputSize = 300;
@@ -72,7 +105,7 @@ public final class ThermalPlanetLabRunner extends ThermalRunnerAbstract {
             return new ArrayList<>();
         }
 
-        final int filesToRead = Math.min(files.length, MAX_NUMBER_OF_WORLOAD_FILES_TO_READ);
+        final int filesToRead = Math.min(files.length, numberOfVMs);
         final List<Cloudlet> list = new ArrayList<>(filesToRead);
 
         for (int i = 0; i < filesToRead; i++) {
@@ -97,13 +130,13 @@ public final class ThermalPlanetLabRunner extends ThermalRunnerAbstract {
     }
 
     @Override
-    protected void init(final String inputFolder) {
+    protected void init(final String inputFolder, PowerModel powerModel) {
         try {
             super.init(inputFolder);
-            broker = Helper.createBroker(getSimulation());
+            broker = ThermalHelper.createBroker(getSimulation());
             cloudletList = createCloudletListPlanetLab(broker, inputFolder);
-            vmList = Helper.createVmList(broker, cloudletList.size());
-            hostList = Helper.createHostList(NUMBER_OF_HOSTS);
+            vmList = ThermalHelper.createVmList(broker, cloudletList.size());
+            hostList = ThermalHelper.createHostList(numberOfHosts, powerModel);
         } catch (Exception e) {
             e.printStackTrace();
             Log.printLine("The simulation has been terminated due to an unexpected error");

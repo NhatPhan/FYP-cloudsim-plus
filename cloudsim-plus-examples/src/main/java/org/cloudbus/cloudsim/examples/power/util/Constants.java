@@ -1,8 +1,6 @@
 package org.cloudbus.cloudsim.examples.power.util;
 
-import org.cloudbus.cloudsim.power.models.PowerModel;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G4Xeon3040;
-import org.cloudbus.cloudsim.power.models.PowerModelSpecPowerHpProLiantMl110G5Xeon3075;
+import org.cloudbus.cloudsim.power.models.*;
 
 /**
  * Some constants used for power-aware simulation examples.
@@ -78,8 +76,8 @@ public final class Constants {
     public final static int HOST_STORAGE = 1000000; // 1 GB
 
     public final static PowerModel[] HOST_POWER = {
-        new PowerModelSpecPowerHpProLiantMl110G4Xeon3040(),
-        new PowerModelSpecPowerHpProLiantMl110G5Xeon3075()
+        new PowerModelSpecPowerCustomIncremental(),
+        new PowerModelSpecPowerCustomIncremental()
     };
 
     /**

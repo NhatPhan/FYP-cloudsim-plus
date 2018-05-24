@@ -21,12 +21,12 @@ public class ThrMu {
             inputFolder = "";
         }
         String outputFolder = "output";
-        String workload = "20110303_50s"; // PlanetLab workload
+        String workload = "20110303_100s"; // PlanetLab workload
         String vmAllocationPolicy = "thermal_thr"; // Static Threshold (THR) VM allocation policy
         String vmSelectionPolicy = "mu"; // Minimum Utilization (MU) VM selection policy
-        double staticUtilizationThreshold = 0.9;
+        double staticUtilizationThreshold = 0.8;
 
-        double[] temperatureThresholds = { 333.0, 335.0, 338.0, 340.0, 343.0, 345.0, 348.0, 350.0, 352.0, 353.0, 354.0, 356.0, 358.0, 360.0 };
+        double[] temperatureThresholds = { 340.0, 343.0, 346.0, 348.0, 350.0, 353.0, 356.0, 360.0, 363.0, 366.0, 370.0 };
         for(double staticTemperatureThreshold : temperatureThresholds ) {
             new ThermalPlanetLabRunner(
                 true,

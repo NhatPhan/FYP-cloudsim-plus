@@ -7,6 +7,7 @@ import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.datacenters.power.PowerDatacenter;
 import org.cloudbus.cloudsim.hosts.power.PowerHost;
+import org.cloudbus.cloudsim.power.models.PowerModel;
 import org.cloudbus.cloudsim.selectionpolicies.power.*;
 import org.cloudbus.cloudsim.util.Log;
 import org.cloudbus.cloudsim.vms.Vm;
@@ -22,9 +23,55 @@ public abstract class ThermalRunnerAbstract {
     protected static List<Vm> vmList;
     protected static List<PowerHost> hostList;
     private CloudSim simulation;
+    private PowerModel powerModel;
 
     private final long startTime;
     private long finishTime;
+
+    public int numberOfHosts;
+    public int numberOfVMs;
+
+    public ThermalRunnerAbstract(
+        boolean enableOutput,
+        boolean outputToFile,
+        String inputFolder,
+        String outputFolder,
+        String workload,
+        String vmAllocationPolicy,
+        String vmSelectionPolicy,
+        double utilizationThreshold,
+        double temperatureThreshold,
+        double underUtilizationThreshold,
+        double weightUtilization,
+        PowerModel powerModel,
+        int numberOfHosts,
+        int numberOfVMs)
+    {
+        this.startTime = System.currentTimeMillis()/1000;
+        this.powerModel = powerModel;
+        this.numberOfHosts = numberOfHosts;
+        this.numberOfVMs = numberOfVMs;
+
+        String[] powerModelPaths = powerModel.toString().split("\\.");
+        String powerModelName = powerModelPaths[powerModelPaths.length-1].split("@")[0];
+
+        initLogOutput(
+            enableOutput, outputToFile, outputFolder, workload,
+            vmAllocationPolicy, vmSelectionPolicy, utilizationThreshold, temperatureThreshold,
+            underUtilizationThreshold, weightUtilization, powerModel, numberOfHosts, numberOfVMs);
+
+        init(inputFolder + "/" + workload, powerModel);
+        start(
+            getExperimentName(
+                String.valueOf(numberOfHosts), String.valueOf(numberOfVMs), String.valueOf(utilizationThreshold),
+                String.valueOf(temperatureThreshold), String.valueOf(underUtilizationThreshold),
+                String.valueOf(weightUtilization), powerModelName
+            ),
+            outputFolder,
+            getVmAllocationPolicy(vmAllocationPolicy, vmSelectionPolicy, utilizationThreshold, temperatureThreshold, underUtilizationThreshold, weightUtilization));
+        this.finishTime = System.currentTimeMillis()/1000;
+        System.out.printf("Total execution time: %.2f minutes\n", getActualExecutionTimeInMinutes());
+    }
 
     public ThermalRunnerAbstract(
         boolean enableOutput,
@@ -64,6 +111,53 @@ public abstract class ThermalRunnerAbstract {
         String vmAllocationPolicy,
         String vmSelectionPolicy,
         double utilizationThreshold,
+        double temperatureThreshold,
+        double underUtilizationThreshold,
+        double weightUtilization,
+        PowerModel powerModel,
+        int numberOfHosts,
+        int numberOfVMs)
+    {
+        try{
+            setEnableOutput(enableOutput);
+            Log.setDisabled(!isEnableOutput());
+            if (isEnableOutput() && outputToFile) {
+                File folder = new File(outputFolder);
+                if (!folder.exists()) {
+                    folder.mkdir();
+                }
+
+                File folder2 = new File(outputFolder + "/log");
+                if (!folder2.exists()) {
+                    folder2.mkdir();
+                }
+
+                String[] powerModelPaths = powerModel.toString().split("\\.");
+                String powerModelName = powerModelPaths[powerModelPaths.length-1].split("@")[0];
+
+                File file = new File(outputFolder + "/log/"
+                    + getExperimentName(
+                    String.valueOf(numberOfHosts), String.valueOf(numberOfVMs), String.valueOf(utilizationThreshold),
+                    String.valueOf(temperatureThreshold), String.valueOf(underUtilizationThreshold),
+                    String.valueOf(weightUtilization), powerModelName
+                ) + ".txt");
+                file.createNewFile();
+                Log.setOutput(new FileOutputStream(file));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+    }
+
+    protected void initLogOutput(
+        boolean enableOutput,
+        boolean outputToFile,
+        String outputFolder,
+        String workload,
+        String vmAllocationPolicy,
+        String vmSelectionPolicy,
+        double utilizationThreshold,
         double temperatureThreshold)
     {
         try{
@@ -95,6 +189,13 @@ public abstract class ThermalRunnerAbstract {
     /**
      * Inits the simulation.
      */
+    protected void init(final String inputFolder, PowerModel powerModel){
+        this.simulation = new CloudSim();
+    }
+
+    /**
+     * Inits the simulation.
+     */
     protected void init(final String inputFolder){
         this.simulation = new CloudSim();
     }
@@ -106,7 +207,7 @@ public abstract class ThermalRunnerAbstract {
         System.out.println("Starting " + experimentName);
 
         try {
-            Helper helper = new Helper(simulation, experimentName, Constants.OUTPUT_CSV, outputFolder);
+            ThermalHelper helper = new ThermalHelper(simulation, experimentName, Constants.OUTPUT_CSV, outputFolder);
             PowerDatacenter datacenter = (PowerDatacenter) helper.createDatacenter(
                 PowerDatacenter.class,
                 hostList,
@@ -136,7 +237,7 @@ public abstract class ThermalRunnerAbstract {
     /**
      * Gets the experiment name.
      */
-    protected String getExperimentName(String... args) {
+    public String getExperimentName(String... args) {
         StringBuilder experimentName = new StringBuilder();
         for (int i = 0; i < args.length; i++) {
             if (args[i].isEmpty()) {
@@ -148,6 +249,37 @@ public abstract class ThermalRunnerAbstract {
             experimentName.append(args[i]);
         }
         return experimentName.toString();
+    }
+
+    /**
+     * Gets the vm allocation policy.
+     */
+    protected VmAllocationPolicy getVmAllocationPolicy(
+        String vmAllocationPolicyName,
+        String vmSelectionPolicyName,
+        double utilizationThreshold,
+        double temperatureThreshold,
+        double underUtilizationThreshold,
+        double weightUtilization)
+    {
+        VmAllocationPolicy vmAllocationPolicy = null;
+        PowerVmSelectionPolicy vmSelectionPolicy = null;
+
+        if (!vmSelectionPolicyName.isEmpty()) {
+            vmSelectionPolicy = getVmSelectionPolicy(vmSelectionPolicyName);
+        }
+
+        switch (vmAllocationPolicyName) {
+            case "thermal_thr":
+                vmAllocationPolicy = new ThermalPowerVmAllocationPolicyMigrationStaticThreshold(
+                    vmSelectionPolicy, utilizationThreshold, temperatureThreshold, underUtilizationThreshold, weightUtilization
+                );
+                break;
+            default:
+                System.out.println("Unknown VM allocation policy: " + vmAllocationPolicyName);
+                System.exit(0);
+        }
+        return vmAllocationPolicy;
     }
 
     /**

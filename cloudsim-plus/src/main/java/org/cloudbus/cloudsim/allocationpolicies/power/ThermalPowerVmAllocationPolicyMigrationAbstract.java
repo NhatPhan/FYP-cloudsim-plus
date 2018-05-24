@@ -24,7 +24,6 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
     implements ThermalPowerVmAllocationPolicyMigration {
 
     private double underUtilizationThreshold;
-    private double thresholdTemperature;
     private double weightUtilization;
     private double weightTemperature;
 
@@ -38,14 +37,19 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
     public ThermalPowerVmAllocationPolicyMigrationAbstract(PowerVmSelectionPolicy vmSelectionPolicy)
     {
         super();
-        this.underUtilizationThreshold = 0.35;
-        this.weightUtilization = 0.;
-        this.weightTemperature = 1 - this.weightUtilization;
         this.savedAllocation = new HashMap<>();
         this.utilizationHistory = new HashMap<>();
         this.metricHistory = new HashMap<>();
         this.timeHistory = new HashMap<>();
         setVmSelectionPolicy(vmSelectionPolicy);
+    }
+
+    public void setWeightUtilization(double weightUtilization) {
+        this.weightUtilization = weightUtilization;
+    }
+
+    public void setWeightTemperature(double weightTemperature) {
+        this.weightTemperature = weightTemperature;
     }
 
     protected PowerVmSelectionPolicy getVmSelectionPolicy() {
@@ -86,6 +90,9 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
         overloadedOrOverThresholdTemperatureHosts.addAll(getOverloadedHosts());
         overloadedOrOverThresholdTemperatureHosts.addAll(getOverThresholdTemperatureHosts());
 
+        printSleepHosts();
+        printActiveHosts();
+
         return overloadedOrOverThresholdTemperatureHosts;
     }
 
@@ -109,6 +116,11 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
                 getDatacenter().getSimulation().clock(), getDatacenter(),
                 overloadedHosts.stream().map(h -> String.valueOf(h.getId())).collect(joining(",")));
         }
+
+        if (!Log.isDisabled()) {
+            Log.printFormattedLine("%.2f: Number of overloaded hosts: %d",
+                getDatacenter().getSimulation().clock(), overloadedHosts.size());
+        }
     }
 
     private void printOverThresholdTemperatureHosts(Set<PowerHostUtilizationHistory> overThresholdTemperatureHosts) {
@@ -116,6 +128,25 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
             Log.printFormattedLine("%.2f: PowerVmAllocationPolicy: Over Threshold Temperature hosts in %s: %s",
                 getDatacenter().getSimulation().clock(), getDatacenter(),
                 overThresholdTemperatureHosts.stream().map(h -> String.valueOf(h.getId())).collect(joining(",")));
+        }
+
+        if (!Log.isDisabled()) {
+            Log.printFormattedLine("%.2f: Number of overheated hosts: %d",
+                getDatacenter().getSimulation().clock(), overThresholdTemperatureHosts.size());
+        }
+    }
+
+    private void printSleepHosts() {
+        if (!Log.isDisabled()) {
+            Log.printFormattedLine("%.2f: Number of switched-off hosts: %d",
+                getDatacenter().getSimulation().clock(), getSleepHosts().size());
+        }
+    }
+
+    private void printActiveHosts() {
+        if (!Log.isDisabled()) {
+            Log.printFormattedLine("%.2f: Number of active hosts: %d",
+                getDatacenter().getSimulation().clock(), getActiveHosts().size());
         }
     }
 
@@ -158,7 +189,7 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
                  * it will not be selected anymore. */
                 targetHost.createTemporaryVm(vm);
 
-                Log.printConcatLine("\tVM #", vm.getId(), " will be migrated to host #", targetHost.getId());
+                Log.printConcatLine("%.2f: ",  getDatacenter().getSimulation().clock(), "\tVM #", vm.getId(), " will be migrated to host #", targetHost.getId());
                 migrationMap.put(vm, targetHost);
             }
         }
@@ -194,10 +225,10 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
             vmsToMigrate.add(vm);
 
             /*Temporarily destroys the selected VM into the overloaded Host so that
-            the loop gets VMs from such a Host until it is not overloaded anymore.*/
+            the loop gets VMs from such a Host until it is not overloaded and overheated anymore.*/
             host.destroyTemporaryVm(vm);
 
-            if (!isHostOverloaded(host) && !isHostOverThresholdTemperature(host)) { break; }
+            if (!isHostOverloaded(host) && !isHostOverThresholdTemperatureWithLog(host)) { break; }
         }
 
         return vmsToMigrate;
@@ -256,6 +287,13 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
         return getHostCpuTemperature(host) > upperThreshold;
     }
 
+    public boolean isHostOverThresholdTemperatureWithLog(PowerHost host) {
+        final double upperThreshold = getThresholdTemperature(host);
+        addHistoryEntryIfAbsent(host, upperThreshold);
+
+        return getHostCpuTemperatureWithLog(host) > upperThreshold;
+    }
+
     /**
      * Cost Function (CF) Algorithm to select host:
      *
@@ -264,12 +302,12 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
      * Ti' and Ui' is normalized value of Ti and Ui
      * Ti' = Ti / T_threshold ; Ui' = Ui / U_threshold
      *
-     * We will select the host with mimimum Cost value
+     * We will select the host with minimum Cost value
     **/
     protected Optional<PowerHost> findHostForVmInternal(final Vm vm, final Stream<PowerHost> hostStream){
         // Min Power After Allocation Comparator (Old)
-        // final Comparator<PowerHost> comparator =
-        //    Comparator.comparingDouble(h -> getPowerAfterAllocationDifference(h, vm));
+//         final Comparator<PowerHost> comparator =
+//            Comparator.comparingDouble(h -> getPowerAfterAllocationDifference(h, vm));
 
         // Cost Function Comparator
         final Comparator<PowerHost> comparator = Comparator.comparingDouble(h ->
@@ -348,6 +386,17 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
 
     private double getHostCpuTemperature(PowerHost host) {
         double temperature = HotspotApi.getTemperature(host.getPower());
+
+        return temperature;
+    }
+
+    private double getHostCpuTemperatureWithLog(PowerHost host) {
+        double temperature = HotspotApi.getTemperature(host.getPower());
+
+        Log.printFormattedLine("%.2f: Host #%d: Utilization is %.2f%%, Temperature is %.2f",
+            getDatacenter().getSimulation().clock(),
+            host.getId(), host.getUtilizationOfCpu() * 100, temperature);
+
         return temperature;
     }
 
@@ -443,6 +492,18 @@ public abstract class ThermalPowerVmAllocationPolicyMigrationAbstract extends Po
     protected List<PowerHost> getSwitchedOffHosts() {
         return this.<PowerHost>getHostList().stream()
             .filter(host -> !host.isActive() || host.isFailed())
+            .collect(toList());
+    }
+
+    protected List<PowerHost> getActiveHosts() {
+        return this.<PowerHost>getHostList().stream()
+            .filter(h -> h.getUtilizationOfCpu() > 0)
+            .collect(toList());
+    }
+
+    protected List<PowerHost> getSleepHosts() {
+        return this.<PowerHost>getHostList().stream()
+            .filter(h -> h.getUtilizationOfCpu() == 0)
             .collect(toList());
     }
 

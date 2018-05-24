@@ -485,5 +485,4 @@ public interface Host extends Machine, Comparable<Host> {
      * @return
      */
     long getUtilizationOfRam();
-
 }
